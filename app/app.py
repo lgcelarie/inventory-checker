@@ -17,18 +17,17 @@ def discord_notify(data):
     res_notification = urllib.request.urlopen(req_notificacion,data=payload)
     print(res_notification.read())
 
-
-data = {
-    'selectedClub-clubpicker' : 6702
-}
-
-items = [
-    {
-        'item': 'Arena para gatos',
-        'url':'https://www.pricesmart.com/site/sv/es/pagina-producto/4057?_hn:type=action&_hn:ref=r193_r9'
-    }
-]
 def lambda_handler(event, context):
+    data = {
+        'selectedClub-clubpicker' : 6702
+    }
+
+    items = [
+        {
+            'item': 'Arena para gatos',
+            'url':'https://www.pricesmart.com/site/sv/es/pagina-producto/4057?_hn:type=action&_hn:ref=r193_r9'
+        }
+    ]
     for item in items:
         req = urllib.request.Request(url=item['url'],headers=headers)
         try:
@@ -37,7 +36,7 @@ def lambda_handler(event, context):
             discord_notify(f"Item **{item['item']}**: Error en URL")
             continue
         gzipped = page.info().get('Content-Encoding') == 'gzip'
-    
+
         if gzipped:
             buf  = StringIO(page.read())
             f = gzip.GzipFile(fileobj = buf)
@@ -45,9 +44,9 @@ def lambda_handler(event, context):
         else:
             data = page
 
-        soup = BeautifulSoup(data,features="html.parser") 
+        soup = BeautifulSoup(data,features="html.parser")
 
         section = soup.select('li:-soup-contains("Los Héroes")')
 
-        if 'fa-times' in section[0].p.i['class']:
+        if not 'fa-times' in section[0].p.i['class']:
             discord_notify(f"Item **{item['item']}**: Disponible")
