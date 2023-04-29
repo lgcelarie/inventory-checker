@@ -11,10 +11,10 @@ provider "aws" {
   region = "us-east-1"
 }
 
-module "lambda" {
-  source  = "terraform-aws-modules/lambda/aws"
-  version = "4.16.0"
-}
+# module "lambda" {
+#   source  = "terraform-aws-modules/lambda/aws"
+#   version = "4.16.0"
+# }
 
 module "s3_bucket" {
   source = "terraform-aws-modules/s3-bucket/aws"
@@ -36,7 +36,7 @@ module "s3_bucket" {
 module "lambda_function" {
   source = "terraform-aws-modules/lambda/aws"
 
-  function_name = "inventory-checker"
+  function_name = "inventory-checker1"
   description   = "Inventory checker lambda function"
   handler       = "app.lambda_handler"
   runtime       = "python3.10"
@@ -48,47 +48,8 @@ module "lambda_function" {
     "WEBHOOK_URL"   = var.webhook_url
     "S3_BUCKET_ARN" = module.s3_bucket.s3_bucket_arn
   }
-
-  tags = {
-    Name = "inventory-checker"
-  }
-}
-
-module "eventbridge" {
-  source = "terraform-aws-modules/eventbridge/aws"
-
-  create_bus = false
-
-  rules = {
-    crons = {
-      description         = "Trigger for Inventory checker lambda"
-      schedule_expression = "cron(0 9,21 * * ? *)"
-    }
-  }
-
-  targets = {
-    crons = [
-      {
-        name  = "lambda-loves-cron"
-        arn   = module.lambda_function.lambda_function_arn
-        input = jsonencode({ "job" : "cron-by-rate" })
-      }
-    ]
-  }
-
-  tags = {
-    Name = "inventory-checker"
-  }
-}
-
-module "iam_policy" {
-  source = "terraform-aws-modules/iam/aws//modules/iam-policy"
-
-  name        = "inventory-checker-exec-role"
-  path        = "/"
-  description = "IAM policy to access inventory checker S3 bucket"
-
-  policy = <<EOF
+  attach_policy_json = true
+  policy_json = <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [
@@ -111,6 +72,41 @@ module "iam_policy" {
   ]
 }
 EOF
+
+  allowed_triggers = {
+    EventBridge = {
+        service = "eventbridge"
+        source_arn = module.eventbridge.eventbridge_rule_arns.crons
+    }
+  }
+
+  tags = {
+    Name = "inventory-checker"
+  }
+}
+
+module "eventbridge" {
+  source = "terraform-aws-modules/eventbridge/aws"
+
+  create_bus = false
+
+  rules = {
+    crons = {
+      description         = "Trigger for Inventory checker lambda"
+      schedule_expression = "cron(0 9,21 * * ? *)"
+    }
+  }
+
+  targets = {
+    crons = [
+      {
+        name  = "inventory-checker-cron"
+        arn   = module.lambda_function.lambda_function_arn
+        input = jsonencode({ "job" : "cron-by-schedule" })
+      }
+    ]
+  }
+
   tags = {
     Name = "inventory-checker"
   }
