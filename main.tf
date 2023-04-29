@@ -49,7 +49,7 @@ module "lambda_function" {
     "S3_BUCKET_ARN" = module.s3_bucket.s3_bucket_arn
   }
   attach_policy_json = true
-  policy_json = <<EOF
+  policy_json = <<-EOF
 {
   "Version": "2012-10-17",
   "Statement": [
