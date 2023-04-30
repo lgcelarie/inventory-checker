@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "4.65.0"
+      version = "~>4.65.0"
     }
   }
 }
@@ -34,16 +34,25 @@ module "s3_bucket" {
 }
 
 module "lambda_function" {
-  source = "terraform-aws-modules/lambda/aws"
+  source  = "terraform-aws-modules/lambda/aws"
+  version = "~>4.16.0"
 
   function_name = "inventory-checker1"
   description   = "Inventory checker lambda function"
   handler       = "app.lambda_handler"
   runtime       = "python3.10"
   timeout       = 300
-  publish = true
+  publish       = true
 
-  source_path = "./app/app.py"
+  # source_path = "./app/app.py"
+  source_path = [
+    "./app/app.py",
+    {
+      path             = "./app",
+      pip_requirements = true,
+      #pip_temp_dir = ""
+    }
+  ]
 
   environment_variables = {
     "WEBHOOK_URL"   = var.webhook_url
@@ -51,32 +60,32 @@ module "lambda_function" {
   }
   attach_policy_json = true
   policy_json = jsonencode({
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-        "Effect": "Allow",
-        "Action": [
-            "logs:PutLogEvents",
-            "logs:CreateLogGroup",
-            "logs:CreateLogStream"
+    "Version" : "2012-10-17",
+    "Statement" : [
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "logs:PutLogEvents",
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream"
         ],
-        "Resource": "arn:aws:logs:*:*:*"
-    },
-    {
-        "Effect": "Allow",
-        "Action": [
-            "s3:GetObject"
+        "Resource" : "arn:aws:logs:*:*:*"
+      },
+      {
+        "Effect" : "Allow",
+        "Action" : [
+          "s3:GetObject"
         ],
-        "Resource": "${module.s3_bucket.s3_bucket_arn}/*"
-    },
-  ]
-})
+        "Resource" : "${module.s3_bucket.s3_bucket_arn}/*"
+      },
+    ]
+  })
 
   allowed_triggers = {
     EventBridge = {
-        # service = "events"
-        principal  = "events.amazonaws.com"
-        source_arn = module.eventbridge.eventbridge_rule_arns["crons"]
+      # service = "events"
+      principal  = "events.amazonaws.com"
+      source_arn = module.eventbridge.eventbridge_rule_arns["crons"]
     }
   }
 
