@@ -41,6 +41,7 @@ module "lambda_function" {
   handler       = "app.lambda_handler"
   runtime       = "python3.10"
   timeout       = 300
+  publish = true
 
   source_path = "./app/app.py"
 
@@ -49,8 +50,7 @@ module "lambda_function" {
     "S3_BUCKET_ARN" = module.s3_bucket.s3_bucket_arn
   }
   attach_policy_json = true
-  policy_json = <<-EOF
-{
+  policy_json = jsonencode({
   "Version": "2012-10-17",
   "Statement": [
     {
@@ -70,13 +70,13 @@ module "lambda_function" {
         "Resource": "${module.s3_bucket.s3_bucket_arn}/*"
     },
   ]
-}
-EOF
+})
 
   allowed_triggers = {
     EventBridge = {
-        service = "eventbridge"
-        source_arn = module.eventbridge.eventbridge_rule_arns.crons
+        # service = "events"
+        principal  = "events.amazonaws.com"
+        source_arn = module.eventbridge.eventbridge_rule_arns["crons"]
     }
   }
 
