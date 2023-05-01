@@ -1,5 +1,5 @@
 from io import StringIO
-import gzip, json, os
+import gzip, json, os, boto3
 from urllib.parse import urlencode
 import urllib.request, urllib.error
 from bs4 import BeautifulSoup
@@ -19,16 +19,15 @@ def discord_notify(data):
 
 def lambda_handler(event, context):
     data = urlencode({"selectedClub-clubpicker":6072}).encode()
-    items = []
-    with open('items.json') as items_file:
-        items = json.loads(items_file.read())
+    s3_client = boto3.client("s3")
+    file_content = s3_client.get_object(Bucket=os.getenv('S3_BUCKET_ARN'), Key="items.json")["Body"].read()
+    if file_content:
+        items = json.loads(file_content)
+    else:
+        items = []
+    # with open('items.json') as items_file:
+    #     items = json.loads(items_file.read())
     print(items)
-    # items = [
-    #     {
-    #         'item': 'Arena para gatos',
-    #         'url':'https://www.pricesmart.com/site/sv/es/pagina-producto/4057?_hn:type=action&_hn:ref=r193_r9'
-    #     }
-    # ]
     for item in items:
         print(f"{item['url']} and item:{item['item']}")
         req = urllib.request.Request(url=item['url'],data=data,headers=headers)

@@ -56,7 +56,7 @@ module "lambda_function" {
 
   environment_variables = {
     "WEBHOOK_URL"   = var.webhook_url
-    "S3_BUCKET_ARN" = module.s3_bucket.s3_bucket_arn
+    "S3_BUCKET_ARN" = module.s3_bucket.s3_bucket_id
   }
   attach_policy_json = true
   policy_json = jsonencode({
