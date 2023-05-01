@@ -7,11 +7,13 @@ It also allows me to try some technologies such as AWS Lambda and Terraform to a
 
 ## Roadmap
 
-- Use a S3 bucket for the origin file
+- Use a S3 bucket for the origin file (DONE)
 
 - Use a layer to reduce the file uploading time
 
 - Implement a frontend to add items?
+
+- Use a remote backend for Terraform
 
 
 ## Usage/Examples
@@ -19,7 +21,7 @@ Just create a .tfvars with the following variables:
 
 - webhook_url: The URL for the discord channel webhook
 
-- s3_bucket_name: the S3 bucket name in which the json file with the items to check will be. Here's an example of the file
+- s3_bucket_name: the S3 bucket name in which the json file with the items to check will be and to name it items.json. Here's an example for the contents of the file:
 
 
 
@@ -27,8 +29,8 @@ Just create a .tfvars with the following variables:
 {
     [
         {
-            'item': 'Cat toy',
-            'url':'https://item.url/itemid'
+            "item": "Cat toy",
+            "url": "https://item.url/itemid"
         }
     ]
 }

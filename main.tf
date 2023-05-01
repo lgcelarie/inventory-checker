@@ -11,11 +11,6 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# module "lambda" {
-#   source  = "terraform-aws-modules/lambda/aws"
-#   version = "4.16.0"
-# }
-
 module "s3_bucket" {
   source = "terraform-aws-modules/s3-bucket/aws"
 
@@ -44,13 +39,11 @@ module "lambda_function" {
   timeout       = 300
   publish       = true
 
-  # source_path = "./app/app.py"
   source_path = [
     "./app/app.py",
     {
       path             = "./app",
       pip_requirements = true,
-      #pip_temp_dir = ""
     }
   ]
 
@@ -58,32 +51,19 @@ module "lambda_function" {
     "WEBHOOK_URL"   = var.webhook_url
     "S3_BUCKET_ARN" = module.s3_bucket.s3_bucket_id
   }
-  attach_policy_json = true
-  policy_json = jsonencode({
-    "Version" : "2012-10-17",
-    "Statement" : [
-      {
-        "Effect" : "Allow",
-        "Action" : [
-          "logs:PutLogEvents",
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream"
-        ],
-        "Resource" : "arn:aws:logs:*:*:*"
-      },
-      {
-        "Effect" : "Allow",
-        "Action" : [
-          "s3:GetObject"
-        ],
-        "Resource" : "${module.s3_bucket.s3_bucket_arn}/*"
-      },
-    ]
-  })
+  attach_policy_statements = true
+  policy_statements = {
+    s3_read = {
+      effect = "Allow",
+      actions = [
+        "s3:GetObject"
+      ],
+      resources = ["${module.s3_bucket.s3_bucket_arn}/*"]
+    }
+  }
 
   allowed_triggers = {
     EventBridge = {
-      # service = "events"
       principal  = "events.amazonaws.com"
       source_arn = module.eventbridge.eventbridge_rule_arns["crons"]
     }

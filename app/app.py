@@ -25,9 +25,9 @@ def lambda_handler(event, context):
         items = json.loads(file_content)
     else:
         items = []
-    # with open('items.json') as items_file:
-    #     items = json.loads(items_file.read())
+
     print(items)
+
     for item in items:
         print(f"{item['url']} and item:{item['item']}")
         req = urllib.request.Request(url=item['url'],data=data,headers=headers)
