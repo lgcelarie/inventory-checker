@@ -13,6 +13,7 @@ jobs:
             -
                 name: Check out repository code
                 uses: actions/checkout@v3
+            -   run: cd app
             -
                 name: Run Snyk for python
                 uses: snyk/actions/python-3.10@master
