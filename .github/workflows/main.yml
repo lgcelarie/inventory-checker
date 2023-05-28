@@ -14,6 +14,13 @@ jobs:
                 name: Check out repository code
                 uses: actions/checkout@v3
             -
+                name: Installing python
+                uses: actions/setup-python@v4
+                with:
+                    python-version: '3.10'
+                    cache: 'pip'
+            - run: pip install -r app/requirements.txt
+            -
                 name: Run Snyk for python
                 uses: snyk/actions/python-3.10@master
                 env:
