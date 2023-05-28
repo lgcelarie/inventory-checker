@@ -1,4 +1,5 @@
 venv
 .terraform*
+*.tfstate*
 *.tfvars
-
+builds
