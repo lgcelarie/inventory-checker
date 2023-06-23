@@ -1,0 +1,12 @@
+version: '3.9'
+
+services:
+  inventory-checker:
+    build:
+      context: .
+    ports:
+      - "9100:8080"
+    environment:
+      - TEST_ENV=true
+    volumes:
+      - ./app:/var/task

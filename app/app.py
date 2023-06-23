@@ -16,24 +16,62 @@ def discord_notify(data):
         'content': data
     }
     payload = json.dumps(payload).encode('utf-8')
-    req_notificacion = urllib.request.Request(url=webhook_url,data=payload,headers={'User-Agent': user_agent, 'Content-Type':'application/json'})
-    res_notification = urllib.request.urlopen(req_notificacion,data=payload)
-    logger.info(res_notification.read())
+    if os.getenv('TEST_ENV', False):
+        req_notificacion = urllib.request.Request(url=webhook_url,data=payload,headers={'User-Agent': user_agent, 'Content-Type':'application/json'})
+        res_notification = urllib.request.urlopen(req_notificacion,data=payload)
+        logger.info(res_notification.read())
+    else:
+        logger.info(payload)
 
-def lambda_handler(event, context):
-    data = urlencode({"selectedClub-clubpicker":6072}).encode()
-    s3_client = boto3.client("s3")
-    file_content = s3_client.get_object(Bucket=os.getenv('S3_BUCKET_ARN'), Key="items.json")["Body"].read()
+def get_headers(item):
+    req_headers = headers
+    if item['type'] == 'market':
+        req_headers.update({'Cookie':f"sucursalSelectos={item['sucursal']}"})
+    return req_headers
+
+def check_market(item, soup):
+    section = soup.select('div.descripcion')
+    # logger.info(section)
+    precio = soup.select("div.descripcion > div.numeros > p.precio span")
+    logger.info(f"Precio: {precio[0].string.replace('$','')}")
+    if float(precio[0].string.replace('$','')) < item['price']:
+        logger.info("exito en comparacion")
+        return True
+    else:
+        return False
+
+def check_club(item, soup):
+    section = soup.select('li:-soup-contains("Los Héroes")')
+
+    if not 'fa-times' in section[0].p.i['class']:
+        logger.info(f"Item **{item['item']}**: Disponible")
+        discord_notify(f"Item **{item['item']}**: Disponible")
+    else:
+        logger.info(f"Item **{item['item']}**: Agotado")
+
+def get_items():
+    file_content = None
+    if os.getenv("TEST_ENV", False):
+        with open('items.json', 'r') as f:
+            file_content = f.read()
+    else:
+        s3_client = boto3.client("s3")
+        file_content = s3_client.get_object(Bucket=os.getenv('S3_BUCKET_ARN'), Key="items.json")["Body"].read()
+
     if file_content:
         items = json.loads(file_content)
     else:
         items = []
 
-    print(items)
+    return items
+
+def lambda_handler(event, context):
+    data = urlencode({"selectedClub-clubpicker":6072}).encode()
+    items = get_items()
 
     for item in items:
-        print(f"{item['url']} and item:{item['item']}")
-        req = urllib.request.Request(url=item['url'],data=data,headers=headers)
+        logger.info(f"{item['url']} and item:{item['item']}")
+        req = urllib.request.Request(url=item['url'],data=data,headers=get_headers(item))
         try:
             page = urllib.request.urlopen(req,data=data)
         except urllib.error.URLError as e:
@@ -51,13 +89,10 @@ def lambda_handler(event, context):
 
         soup = BeautifulSoup(data,features="html.parser")
 
-        section = soup.select('li:-soup-contains("Los Héroes")')
-
-        if not 'fa-times' in section[0].p.i['class']:
-            logger.info(f"Item **{item['item']}**: Disponible")
-            discord_notify(f"Item **{item['item']}**: Disponible")
+        if item['type'] == 'market':
+            check_market(item,soup)
         else:
-            logger.info(f"Item **{item['item']}**: Agotado")
+            check_club(item,soup)
     return {
         'statusCode': 200,
         'body': json.dumps({'message': 'Productos procesados exitosamente'})
