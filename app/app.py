@@ -6,12 +6,16 @@ from bs4 import BeautifulSoup
 
 user_agent = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)'
 headers = {'User-Agent': user_agent}
-webhook_url = os.getenv('WEBHOOK_URL',"http://fake.org")
+club_webhook_url = os.getenv('WEBHOOK_URL',"http://fake.org")
+market_webhook_url = os.getenv('WEBHOOK_URL',"http://fake.org")
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 
-def discord_notify(data):
+'''
+Funcion encargada de notificar al canal de discord correspondiente, dependiendo del tipo de item.
+'''
+def discord_notify(data,webhook_url):
     payload = {
         'content': data
     }
@@ -23,12 +27,21 @@ def discord_notify(data):
     else:
         logger.info(payload)
 
+'''
+Funcion que prepara los headers correspondientes para los 2 tipos de items, club y market
+Devuelve el diccionario a ser usado con el request.
+'''
 def get_headers(item):
     req_headers = headers
     if item['type'] == 'market':
         req_headers.update({'Cookie':f"sucursalSelectos={item['sucursal']}"})
     return req_headers
 
+'''
+Funcion que verifica el item en caso de ser perteneciente a un supermercado.
+Recibe el item y la "sopa" para procesamiento. Por el momento solamente ejecuta comparacion de precios.
+TODO: implementar tipos de analisis adicionales, como verificacion de promocion 2x1
+'''
 def check_market(item, soup):
     section = soup.select('div.descripcion')
     # logger.info(section)
@@ -36,19 +49,29 @@ def check_market(item, soup):
     logger.info(f"Precio: {precio[0].string.replace('$','')}")
     if float(precio[0].string.replace('$','')) < item['price']:
         logger.info("exito en comparacion")
-        return True
+        discord_notify(f"Item **{item['item']}**: Disponible", market_webhook_url)
     else:
-        return False
+        logger.info()
 
+'''
+Funcion que verifica la existencia de un producto en un club de compras especifico
+'''
 def check_club(item, soup):
     section = soup.select('li:-soup-contains("Los Héroes")')
 
     if not 'fa-times' in section[0].p.i['class']:
         logger.info(f"Item **{item['item']}**: Disponible")
-        discord_notify(f"Item **{item['item']}**: Disponible")
+        if os.getenv("TEST_ENV", False):
+            discord_notify(f"Item **{item['item']}**: Disponible",club_webhook_url)
     else:
         logger.info(f"Item **{item['item']}**: Agotado")
 
+'''
+Funcion que obtiene los items a procesar, dependiendo del entorno:
+    S3 para produccion
+    local para desarrollo
+Devuelve los items en un diccionario
+'''
 def get_items():
     file_content = None
     if os.getenv("TEST_ENV", False):
@@ -70,6 +93,9 @@ def lambda_handler(event, context):
     items = get_items()
 
     for item in items:
+        if item['enabled'] is False:
+            logger.info(f"Item {item['item']} esta deshabilitado. Omitiendo validacion...")
+            continue
         logger.info(f"{item['url']} and item:{item['item']}")
         req = urllib.request.Request(url=item['url'],data=data,headers=get_headers(item))
         try:

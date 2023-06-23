@@ -13,13 +13,15 @@ It also allows me to try some technologies such as AWS Lambda and Terraform to a
 
 - Implement a frontend to add items?
 
-- Use a remote backend for Terraform
+- Use a remote backend for Terraform (DONE)
 
 
 ## Usage/Examples
 Just create a .tfvars with the following variables:
 
-- webhook_url: The URL for the discord channel webhook
+- market_webhook_url: The URL for the discord channel webhook for the market items
+
+- club_webhook_url: The URL for the discord channel webhook for the club items
 
 - s3_bucket_name: the S3 bucket name in which the json file with the items to check will be and to name it items.json. Here's an example for the contents of the file:
 
@@ -29,8 +31,18 @@ Just create a .tfvars with the following variables:
 {
     [
         {
+            "type": "club",
             "item": "Cat toy",
-            "url": "https://item.url/itemid"
+            "url": "https://www.cluburl.com/product/408888",
+            "enabled": false
+        },
+        {
+            "type": "market",
+            "item": "Item1",
+            "url": "https://www.marketurl.com/product/76519",
+            "sucursal": 999,
+            "price": 89.00,
+            "enabled": true
         }
     ]
 }
