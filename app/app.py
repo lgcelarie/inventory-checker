@@ -6,8 +6,8 @@ from bs4 import BeautifulSoup
 
 user_agent = 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)'
 headers = {'User-Agent': user_agent}
-club_webhook_url = os.getenv('WEBHOOK_URL',"http://fake.org")
-market_webhook_url = os.getenv('WEBHOOK_URL',"http://fake.org")
+club_webhook_url = os.getenv('CLUB_WEBHOOK_URL',"http://fake.org")
+market_webhook_url = os.getenv('MARKET_WEBHOOK_URL',"http://fake.org")
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
@@ -20,7 +20,7 @@ def discord_notify(data,webhook_url):
         'content': data
     }
     payload = json.dumps(payload).encode('utf-8')
-    if os.getenv('TEST_ENV', False):
+    if not os.getenv('TEST_ENV', False):
         req_notificacion = urllib.request.Request(url=webhook_url,data=payload,headers={'User-Agent': user_agent, 'Content-Type':'application/json'})
         res_notification = urllib.request.urlopen(req_notificacion,data=payload)
         logger.info(res_notification.read())
@@ -46,12 +46,24 @@ def check_market(item, soup):
     section = soup.select('div.descripcion')
     # logger.info(section)
     precio = soup.select("div.descripcion > div.numeros > p.precio span")
+    ahorro = soup.select("div.descripcion > div.numeros > p.ahorro span")
     logger.info(f"Precio: {precio[0].string.replace('$','')}")
-    if float(precio[0].string.replace('$','')) < item['price']:
-        logger.info("exito en comparacion")
-        discord_notify(f"Item **{item['item']}**: Disponible", market_webhook_url)
-    else:
-        logger.info()
+    match item['subtype']:
+        case 'precio':
+            if float(precio[0].string.replace('$','')) < item['price']:
+                logger.info("exito en comparacion")
+                discord_notify(f"Item **{item['item']}**: Disponible", market_webhook_url)
+            else:
+                logger.info(f"Item **{item['item']}**: El precio no esta debajo del umbral establecido")
+
+        case '2x1':
+            if not ahorro:
+                logger.info(f"Item **{item['item']}**: El item no posee una promocion 2x1 por el momento")
+            elif 'Seleccione 2X' in ahorro[0].string:
+                logger.info(f"Item **{item['item']}**: Promocion 2x1 disponible")
+                discord_notify(f"Item **{item['item']}**: Promocion 2x1 disponible", market_webhook_url)
+        case _:
+            logger.warning(f"Item **{item['item']}**: No incluye un subtipo aplicable")
 
 '''
 Funcion que verifica la existencia de un producto en un club de compras especifico
