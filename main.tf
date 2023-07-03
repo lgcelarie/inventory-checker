@@ -5,10 +5,11 @@ terraform {
       version = "~>4.65.0"
     }
   }
+  backend "s3" {}
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
 }
 
 module "s3_bucket" {
@@ -16,7 +17,7 @@ module "s3_bucket" {
 
   bucket = var.s3_bucket_name
   acl    = "private"
-
+  force_destroy = true
   control_object_ownership = true
   object_ownership         = "ObjectWriter"
 
@@ -48,7 +49,8 @@ module "lambda_function" {
   ]
 
   environment_variables = {
-    "WEBHOOK_URL"   = var.webhook_url
+    "MARKET_WEBHOOK_URL"   = var.market_webhook_url
+    "CLUB_WEBHOOK_URL"     = var.club_webhook_url
     "S3_BUCKET_ARN" = module.s3_bucket.s3_bucket_id
   }
   attach_policy_statements = true
