@@ -44,19 +44,19 @@ jobs:
                 name: configure aws credentials
                 uses: aws-actions/configure-aws-credentials@v1.7.0
                 with:
-                    role-to-assume: ${{ env.CICD_ROLE}}
+                    role-to-assume: ${{ vars.CICD_ROLE}}
                     role-session-name: GitHub_to_AWS_via_FederatedOIDC
-                    aws-region: ${{ env.TF_VAR_AWS_REGION }}
+                    aws-region: ${{ vars.TF_VAR_AWS_REGION }}
             -
                 name: Terraform setup
                 uses: hashicorp/setup-terraform@v2
             -
                 name: Backend setup and terraform init
                 run: |
-                      echo 'bucket = "${{ env.BACKEND_BUCKET_NAME }}" > backend.conf'
-                      echo 'key    = "${{ env.BACKEND_KEY }}" >> backend.conf'
-                      echo 'region = "${{ env.TF_VAR_AWS_REGION }}" >> backend.conf'
-                      terraform init -backend-config="bucket=${{ env.BACKEND_BUCKET_NAME }}" -backend-config="key=${{ env.BACKEND_KEY }}" -backend-config="region=${{ env.TF_VAR_AWS_REGION }}"
+                      echo 'bucket = "${{ vars.BACKEND_BUCKET_NAME }}" > backend.conf'
+                      echo 'key    = "${{ vars.BACKEND_KEY }}" >> backend.conf'
+                      echo 'region = "${{ vars.TF_VAR_AWS_REGION }}" >> backend.conf'
+                      terraform init -backend-config="bucket=${{ vars.BACKEND_BUCKET_NAME }}" -backend-config="key=${{ vars.BACKEND_KEY }}" -backend-config="region=${{ vars.TF_VAR_AWS_REGION }}"
             -
                 name: Terraform plan
                 run: |
