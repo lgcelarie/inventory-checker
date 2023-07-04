@@ -22,6 +22,10 @@ jobs:
                 with:
                     python-version: '3.10'
                     cache: 'pip'
+            -
+                name: Installing dependencies
+                run: |
+                  python3 -m pip install -r app/requirements.txt
             - uses: snyk/actions/python-3.10@master
               with:
                 args: --sarif-file-output=${{env.SARIF_FOLDER}}/snyk.sarif
