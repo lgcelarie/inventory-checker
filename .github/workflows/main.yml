@@ -28,7 +28,7 @@ jobs:
                   python3 -m pip install -r app/requirements.txt
             - uses: snyk/actions/python-3.10@master
               with:
-                args: --sarif-file-output=${{env.SARIF_FOLDER}}/snyk.sarif
+                args: --sarif-file-output=${{env.SARIF_FOLDER}}/snyk.sarif --all-projects
             -
                 name: Snyk Code test
                 run: |
