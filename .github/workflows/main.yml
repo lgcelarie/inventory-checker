@@ -40,6 +40,7 @@ jobs:
                 run: |
                       cd app
                       snyk ignore --file-path=venv
+                      snyk auth $SNYK_TOKEN
                       snyk code test --sarif-file-output=snyk-code.sarif
                       cat snyk-code.sarif
                 env:
