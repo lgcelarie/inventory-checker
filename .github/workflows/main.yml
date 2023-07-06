@@ -12,6 +12,9 @@ jobs:
         env:
             SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
             SARIF_FOLDER: sarif-results
+        permissions:
+            id-token: write   # This is required for requesting the JWT
+            contents: read    # This is required for actions/checkout
         steps:
             -
                 name: Check out repository code
