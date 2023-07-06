@@ -69,7 +69,7 @@ jobs:
             -
                 name: Terraform apply
                 run: |
-                      terraform plan -auto-approve
+                      terraform apply -auto-approve
                 env:
                   TF_VAR_AWS_REGION: ${{ vars.TERRAFORM_AWS_REGION }}
                   TF_VAR_MARKET_WEBHOOK_URL: ${{ vars.MARKET_WEBHOOK_URL }}
