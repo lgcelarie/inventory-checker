@@ -1,19 +1,15 @@
-variable "market_webhook_url" {
+variable "MARKET_WEBHOOK_URL" {
   type = string
 }
 
-variable "club_webhook_url" {
+variable "CLUB_WEBHOOK_URL" {
   type = string
 }
 
-variable "s3_bucket_name" {
+variable "S3_BUCKET_NAME" {
   type = string
 }
 
-variable "backend_bucket_name" {
-  type = string
-}
-
-variable "aws_region" {
+variable "AWS_REGION" {
   type = string
 }

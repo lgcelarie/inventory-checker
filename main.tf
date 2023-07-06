@@ -9,13 +9,13 @@ terraform {
 }
 
 provider "aws" {
-  region = var.aws_region
+  region = var.AWS_REGION
 }
 
 module "s3_bucket" {
   source = "terraform-aws-modules/s3-bucket/aws"
 
-  bucket = var.s3_bucket_name
+  bucket = var.S3_BUCKET_NAME
   acl    = "private"
   force_destroy = true
   control_object_ownership = true
@@ -49,8 +49,8 @@ module "lambda_function" {
   ]
 
   environment_variables = {
-    "MARKET_WEBHOOK_URL"   = var.market_webhook_url
-    "CLUB_WEBHOOK_URL"     = var.club_webhook_url
+    "MARKET_WEBHOOK_URL"   = var.MARKET_WEBHOOK_URL
+    "CLUB_WEBHOOK_URL"     = var.CLUB_WEBHOOK_URL
     "S3_BUCKET_ARN" = module.s3_bucket.s3_bucket_id
   }
   attach_policy_statements = true
