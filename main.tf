@@ -67,7 +67,7 @@ module "lambda_function" {
   allowed_triggers = {
     EventBridge = {
       principal  = "events.amazonaws.com"
-      source_arn = module.eventbridge.eventbridge_rule_arns["crons"]
+      source_arn = module.eventbridge.eventbridge_schedule_arns["inventory-checker-cron"]
     }
   }
 
