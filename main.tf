@@ -15,9 +15,9 @@ provider "aws" {
 module "s3_bucket" {
   source = "terraform-aws-modules/s3-bucket/aws"
 
-  bucket = var.S3_BUCKET_NAME
-  acl    = "private"
-  force_destroy = true
+  bucket                   = var.S3_BUCKET_NAME
+  acl                      = "private"
+  force_destroy            = true
   control_object_ownership = true
   object_ownership         = "ObjectWriter"
 
@@ -49,9 +49,9 @@ module "lambda_function" {
   ]
 
   environment_variables = {
-    "MARKET_WEBHOOK_URL"   = var.MARKET_WEBHOOK_URL
-    "CLUB_WEBHOOK_URL"     = var.CLUB_WEBHOOK_URL
-    "S3_BUCKET_ARN" = module.s3_bucket.s3_bucket_id
+    "MARKET_WEBHOOK_URL" = var.MARKET_WEBHOOK_URL
+    "CLUB_WEBHOOK_URL"   = var.CLUB_WEBHOOK_URL
+    "S3_BUCKET_ARN"      = module.s3_bucket.s3_bucket_id
   }
   attach_policy_statements = true
   policy_statements = {
@@ -79,24 +79,22 @@ module "lambda_function" {
 module "eventbridge" {
   source = "terraform-aws-modules/eventbridge/aws"
 
-  create_bus = false
+  bus_name = "inventory-checker"
 
-  rules = {
-    crons = {
-      description         = "Trigger for Inventory checker lambda"
+  attach_lambda_policy = true
+  lambda_target_arns   = [module.lambda_function.lambda_function_arn]
+
+  schedules = {
+    inventory-checker-cron = {
+      description         = "Trigger for inventory checker lambda function"
       schedule_expression = "cron(0 9,21 * * ? *)"
+      timezone            = "America/El_Salvador"
+      arn                 = module.lambda_function.lambda_function_arn
+      input               = jsonencode({ "job" : "cron-by-schedule" })
     }
   }
 
-  targets = {
-    crons = [
-      {
-        name  = "inventory-checker-cron"
-        arn   = module.lambda_function.lambda_function_arn
-        input = jsonencode({ "job" : "cron-by-schedule" })
-      }
-    ]
-  }
+  create_bus = true
 
   tags = {
     Name = "inventory-checker"
