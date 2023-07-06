@@ -49,26 +49,29 @@ jobs:
                 with:
                     role-to-assume: ${{ vars.CICD_ROLE}}
                     role-session-name: GitHub_to_AWS_via_FederatedOIDC
-                    aws-region: ${{ vars.TF_VAR_AWS_REGION }}
+                    aws-region: ${{ vars.TERRAFORM_AWS_REGION }}
             -
                 name: Terraform setup
                 uses: hashicorp/setup-terraform@v2
             -
                 name: Backend setup and terraform init
                 run: |
-                      echo 'bucket = "${{ vars.BACKEND_BUCKET_NAME }}" > backend.conf'
-                      echo 'key    = "${{ vars.BACKEND_KEY }}" >> backend.conf'
-                      echo 'region = "${{ vars.TF_VAR_AWS_REGION }}" >> backend.conf'
-                      terraform init -backend-config="bucket=${{ vars.BACKEND_BUCKET_NAME }}" -backend-config="key=${{ vars.BACKEND_KEY }}" -backend-config="region=${{ vars.TF_VAR_AWS_REGION }}"
+                      terraform init -backend-config="bucket=${{ vars.BACKEND_BUCKET_NAME }}" -backend-config="key=${{ vars.BACKEND_KEY }}" -backend-config="region=${{ vars.TERRAFORM_AWS_REGION }}"
             -
                 name: Terraform plan
                 run: |
                       terraform plan
                 env:
-                  TF_VAR_AWS_REGION: ${{ vars.TF_VAR_AWS_REGION }}
+                    TF_VAR_AWS_REGION: ${{ vars.TERRAFORM_AWS_REGION }}
+                    TF_VAR_MARKET_WEBHOOK_URL: ${{ vars.MARKET_WEBHOOK_URL }}
+                    TF_VAR_CLUB_WEBHOOK_URL: ${{ vars.CLUB_WEBHOOK_URL }}
+                    TF_VAR_S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
             -
                 name: Terraform apply
                 run: |
                       terraform plan -auto-approve
                 env:
-                  TF_VAR_AWS_REGION: ${{ vars.TF_VAR_AWS_REGION }}
+                  TF_VAR_AWS_REGION: ${{ vars.TERRAFORM_AWS_REGION }}
+                  TF_VAR_MARKET_WEBHOOK_URL: ${{ vars.MARKET_WEBHOOK_URL }}
+                  TF_VAR_CLUB_WEBHOOK_URL: ${{ vars.CLUB_WEBHOOK_URL }}
+                  TF_VAR_S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
