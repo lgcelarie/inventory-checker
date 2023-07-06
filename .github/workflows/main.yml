@@ -9,6 +9,12 @@ on:
 jobs:
     snyk-scan:
         runs-on: ubuntu-latest
+        env:
+            SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+            SARIF_FOLDER: sarif-results
+        permissions:
+            id-token: write   # This is required for requesting the JWT
+            contents: read    # This is required for actions/checkout
         steps:
             -
                 name: Check out repository code
@@ -19,26 +25,53 @@ jobs:
                 with:
                     python-version: '3.10'
                     cache: 'pip'
-            - uses: snyk/actions/setup@master
-            - run: |
-                    cd app
-                    python3 -m venv venv
-                    source venv/bin/activate
-                    pip install -r requirements.txt
-                    snyk test --sarif-file-output=snyk.sarif
-                    cat snyk.sarif
-              env:
-                    SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
             -
-                name: Upload result to GitHub Code Scanning
+                name: Installing dependencies
+                run: |
+                  python3 -m pip install -r app/requirements.txt
+            - uses: snyk/actions/setup@master
+            -
+                run: |
+                  snyk test --sarif-file-output=${{env.SARIF_FOLDER}}/snyk.sarif --all-projects
+            -
+                name: Snyk Code test
+                run: |
+                  snyk code test --all-projects --sarif-file-output=${{env.SARIF_FOLDER}}/snyk-code.sarif || true
+            -
+                name: Upload open source dependencies analysis result to GitHub Code Scanning
                 uses: github/codeql-action/upload-sarif@v2
                 with:
-                    sarif_file: app/snyk.sarif
+                    sarif_file: ${{env.SARIF_FOLDER}}
+                    category: dependencies-open-source
             -
-                name: Snyk code analysis
+                name: configure aws credentials
+                uses: aws-actions/configure-aws-credentials@v1.7.0
+                with:
+                    role-to-assume: ${{ vars.CICD_ROLE}}
+                    role-session-name: GitHub_to_AWS_via_FederatedOIDC
+                    aws-region: ${{ vars.TERRAFORM_AWS_REGION }}
+            -
+                name: Terraform setup
+                uses: hashicorp/setup-terraform@v2
+            -
+                name: Backend setup and terraform init
                 run: |
-                      cd app
-                      snyk code test --sarif-file-output=snyk-code.sarif
-                      cat snyk-code.sarif
+                      terraform init -backend-config="bucket=${{ vars.BACKEND_BUCKET_NAME }}" -backend-config="key=${{ vars.BACKEND_KEY }}" -backend-config="region=${{ vars.TERRAFORM_AWS_REGION }}"
+            -
+                name: Terraform plan
+                run: |
+                      terraform plan
                 env:
-                    SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+                    TF_VAR_AWS_REGION: ${{ vars.TERRAFORM_AWS_REGION }}
+                    TF_VAR_MARKET_WEBHOOK_URL: ${{ vars.MARKET_WEBHOOK_URL }}
+                    TF_VAR_CLUB_WEBHOOK_URL: ${{ vars.CLUB_WEBHOOK_URL }}
+                    TF_VAR_S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
+            -
+                name: Terraform apply
+                run: |
+                      terraform apply -auto-approve
+                env:
+                  TF_VAR_AWS_REGION: ${{ vars.TERRAFORM_AWS_REGION }}
+                  TF_VAR_MARKET_WEBHOOK_URL: ${{ vars.MARKET_WEBHOOK_URL }}
+                  TF_VAR_CLUB_WEBHOOK_URL: ${{ vars.CLUB_WEBHOOK_URL }}
+                  TF_VAR_S3_BUCKET_NAME: ${{ vars.S3_BUCKET_NAME }}
