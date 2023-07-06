@@ -64,7 +64,11 @@ jobs:
                 name: Terraform plan
                 run: |
                       terraform plan
+                env:
+                  TF_VAR_AWS_REGION: ${{ vars.TF_VAR_AWS_REGION }}
             -
                 name: Terraform apply
                 run: |
                       terraform plan -auto-approve
+                env:
+                  TF_VAR_AWS_REGION: ${{ vars.TF_VAR_AWS_REGION }}
