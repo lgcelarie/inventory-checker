@@ -44,6 +44,11 @@ TODO: implementar tipos de analisis adicionales, como verificacion de promocion 
 '''
 def check_market(item, soup):
     section = soup.select('div.descripcion')
+    if len(section) is 0:
+        logger.warning(f"Item **{item['item']}**: Sin informacion. Validar enlace")
+        if os.getenv("TEST_ENV", False):
+            discord_notify(f"Item **{item['item']}**: Sin informacion. Validar enlace",market_webhook_url)
+        return
     # logger.info(section)
     precio = soup.select("div.descripcion > div.numeros > p.precio span")
     ahorro = soup.select("div.descripcion > div.numeros > p.ahorro span")
@@ -66,11 +71,19 @@ def check_market(item, soup):
             logger.warning(f"Item **{item['item']}**: No incluye un subtipo aplicable")
 
 '''
-Funcion que verifica la existencia de un producto en un club de compras especifico
+Funcion que verifica la existencia de un producto en un club de compras especifico. Si no se encuentra la seccion especifica
+se marca como invalido.
 '''
 def check_club(item, soup):
     section = soup.select('li:-soup-contains("Los Héroes")')
-
+    # logger.info(len(section))
+    # logger.info(section)
+    if len(section) is 0:
+        logger.warning(f"Item **{item['item']}**: Sin informacion. Validar enlace")
+        if os.getenv("TEST_ENV", False):
+            discord_notify(f"Item **{item['item']}**: Sin informacion. Validar enlace",club_webhook_url)
+        return
+    
     if not 'fa-times' in section[0].p.i['class']:
         logger.info(f"Item **{item['item']}**: Disponible")
         if os.getenv("TEST_ENV", False):
