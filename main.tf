@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~>4.65.0"
+      version = "~>5.54.1"
     }
   }
   backend "s3" {}
@@ -31,7 +31,7 @@ module "s3_bucket" {
 
 module "lambda_function" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "~>4.18.0"
+  version = "~>6.1.0"
 
   function_name = "inventory-checker1"
   description   = "Inventory checker lambda function"
