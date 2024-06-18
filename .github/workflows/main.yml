@@ -15,6 +15,7 @@ jobs:
         permissions:
             id-token: write   # This is required for requesting the JWT
             contents: read    # This is required for actions/checkout
+            security-events: write
         steps:
             -
                 name: Check out repository code
@@ -39,7 +40,7 @@ jobs:
                   snyk code test --all-projects --sarif-file-output=${{env.SARIF_FOLDER}}/snyk-code.sarif || true
             -
                 name: Upload open source dependencies analysis result to GitHub Code Scanning
-                uses: github/codeql-action/upload-sarif@v2
+                uses: github/codeql-action/upload-sarif@v3
                 with:
                     sarif_file: ${{env.SARIF_FOLDER}}
                     category: dependencies-open-source
