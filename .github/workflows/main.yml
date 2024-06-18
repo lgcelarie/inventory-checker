@@ -46,14 +46,14 @@ jobs:
                     category: dependencies-open-source
             -
                 name: configure aws credentials
-                uses: aws-actions/configure-aws-credentials@v1.7.0
+                uses: aws-actions/configure-aws-credentials@v4
                 with:
                     role-to-assume: ${{ vars.CICD_ROLE}}
                     role-session-name: GitHub_to_AWS_via_FederatedOIDC
                     aws-region: ${{ vars.TERRAFORM_AWS_REGION }}
             -
                 name: Terraform setup
-                uses: hashicorp/setup-terraform@v2
+                uses: hashicorp/setup-terraform@v3
             -
                 name: Backend setup and terraform init
                 run: |

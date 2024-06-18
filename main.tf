@@ -31,7 +31,7 @@ module "s3_bucket" {
 
 module "lambda_function" {
   source  = "terraform-aws-modules/lambda/aws"
-  version = "~>4.16.0"
+  version = "~>4.18.0"
 
   function_name = "inventory-checker1"
   description   = "Inventory checker lambda function"
